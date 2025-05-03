@@ -1,11 +1,13 @@
 package com.healthinsurance.Health.PersonalDetailsController;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,46 +15,348 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.healthinsurance.Health.PersonalDTO.PersonalDetailsDTO;
+import com.healthinsurance.Health.PersonalDTO.UserLoginRequest;
+import com.healthinsurance.Health.PersonalDetailsRepository.QueueTableRepository;
 import com.healthinsurance.Health.PersonalDetailsService.PersonalDetailsService;
 import com.healthinsurance.Health.PersonalEntities.PersonalDetails;
+import com.healthinsurance.Health.PersonalEntities.QueueTable;
+import com.healthinsurance.Health.PersonalEntities.User;
+import com.healthinsurance.Health.PraposalListing.PraposalListing;
+import com.healthinsurance.Health.Response.ResponseHandler;
+import com.healthinsurance.Health.hepler.Auth;
+import com.healthinsurance.Health.hepler.TokenGenerator;
+
+import io.swagger.v3.oas.annotations.Parameter;
+
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
+
 
 @RestController
-@RequestMapping("/api/personalDetails")
+@RequestMapping("/proposer")
 public class PersonalDetailsController {
+
 	@Autowired
-    private PersonalDetailsService personalDetailsService;
+	private PersonalDetailsService personalDetailsService;
+	
+	@Autowired
+	private QueueTableRepository queueTableRepository;
+ 
+	
+	@Autowired
+	private Auth auth;
 
-    @PostMapping
-    public ResponseEntity<PersonalDetails> createPersonalDetails(@RequestBody PersonalDetails personalDetails) {
-        PersonalDetails createdPersonalDetails = personalDetailsService.createPersonalDetails(personalDetails);
-        return new ResponseEntity<>(createdPersonalDetails, HttpStatus.CREATED);
-    }
+	@PostMapping("/login")
+	com.healthinsurance.Health.Response.ResponseHandler ResponseHandler(@RequestBody UserLoginRequest user ) {
+		
+		ResponseHandler response = new ResponseHandler();
+		
+		System.err.println(" shiii" + user.getPassword());
+		
+		try {
+			String token = null;
+			try {
+				
+				boolean authenticateUser = false;
+				try {
+					authenticateUser = auth.authenticateUser(user.getUsername(),user.getPassword());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				if(authenticateUser) {
+					token = TokenGenerator.generateToken("myUser123");
+						response.setData(token);
+				}else{
+					System.err.println("failed");
+				}
+				
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			System.err.println(token);
+		} catch (Exception e) {
+			e.printStackTrace();
+			// TODO: handle exception
+		}
+		return response;
+		
+		
+	}
+	
+	@PostMapping("add")
+	public ResponseHandler addPersonalDetails(@RequestBody PersonalDetailsDTO personalDetailsdto) {
+		ResponseHandler responseHandler = new ResponseHandler();
+		try {
 
-    @GetMapping
-    public ResponseEntity<List<PersonalDetails>> getAllPersonalDetails() {
-        List<PersonalDetails> personalDetailsList = personalDetailsService.getAllPersonalDetails();
-        return new ResponseEntity<>(personalDetailsList, HttpStatus.OK);
-    }
+			PersonalDetails savedDetails = personalDetailsService.savePersonalDetails(personalDetailsdto);
+			responseHandler.setTotalRecords(personalDetailsService.getTotalCount()); 
+			responseHandler.setStatus(true); 
+			responseHandler.setData(savedDetails); 
+			responseHandler.setMessage("Personal details saved successfully");
 
-    @GetMapping("/{pid}")
-    public ResponseEntity<PersonalDetails> getPersonalDetailsById(@PathVariable int pid) {
-        Optional<PersonalDetails> personalDetails = personalDetailsService.getPersonalDetailsById(pid);
-        return personalDetails.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
-    }
+		} catch (IllegalArgumentException e) {  
+			e.printStackTrace(); 
+			responseHandler.setTotalRecords(0); 
+			responseHandler.setStatus(false);
+			responseHandler.setData(new ArrayList<>()); 
+			responseHandler.setMessage(e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			responseHandler.setStatus(false);
+			responseHandler.setData(new ArrayList<>());
+			responseHandler.setMessage(e.getMessage());  
+		}
+		return responseHandler;  
+	}
 
-    @PutMapping("/{pid}")
-    public ResponseEntity<PersonalDetails> updatePersonalDetails(@PathVariable int pid, @RequestBody PersonalDetails personalDetails) {
-        personalDetails.setPid(pid);
-        PersonalDetails updatedPersonalDetails = personalDetailsService.updatePersonalDetails(personalDetails);
-        return new ResponseEntity<>(updatedPersonalDetails, HttpStatus.OK);
-    }
+	@PutMapping("updtae_id/{id}")
+	public ResponseHandler updatePersonalDetails(@PathVariable Integer id, @RequestBody PersonalDetailsDTO personalDetailsDto) {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try {
+	        PersonalDetails updatedPersonalDetails = personalDetailsService.updatePersonalDetails(id, personalDetailsDto);
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount()); 
+	        responseHandler.setStatus(true);
+	        responseHandler.setData(updatedPersonalDetails);
+	        responseHandler.setMessage("Personal details updated successfully");
+ 
+	    } catch (IllegalArgumentException e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0); 
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("Failed to update personal details: " + e.getMessage());
 
-    @DeleteMapping("/{pid}")
-    public ResponseEntity<Void> deletePersonalDetails(@PathVariable int pid) {
-        personalDetailsService.deletePersonalDetails(pid);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	    } catch (ResponseStatusException e) {  
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0); 
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("Personal details not found for the given ID");
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0); 
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("An error occurred while updating personal details");
+
+	    }
+		return responseHandler; 
+	}
+
+
+	@GetMapping("get_all")
+	public ResponseHandler getAllPersonalDetails() {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try {
+	        List<PersonalDetails> allPersonalDetails = personalDetailsService.getAllPersonalDetails();
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());  
+	        responseHandler.setStatus(true);
+	        responseHandler.setData(allPersonalDetails);
+	        responseHandler.setMessage("Personal details fetched successfully.");
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("An error occurred while fetching personal details.");
+	    }
+		return responseHandler; 
+	}
+
+
+	@GetMapping("get_id/{id}")
+	public ResponseHandler getPersonalDetailsById(@PathVariable int id) {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try {
+	        PersonalDetails personalDetails = personalDetailsService.getPersonalDetailsById(id);
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());
+	        responseHandler.setStatus(true);
+	        responseHandler.setData(personalDetails);
+	        responseHandler.setMessage("Personal details retrieved successfully");
+
+	    } catch (IllegalArgumentException e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("Failed to retrieve personal details: " + e.getMessage());
+
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("An error occurred while retrieving personal details");
+
+	    }
+		return responseHandler;
+	}
+
+ 
+	@DeleteMapping("delete_id/{id}")  
+	public ResponseHandler deletePersonalDetailsById(@PathVariable int id) {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try {
+	        personalDetailsService.deletePersonalDetailsById(id);
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());
+	        responseHandler.setStatus(true);
+	        responseHandler.setData(new ArrayList<>()); 
+	        responseHandler.setMessage("Personal details with ID " + id + " have been deleted.");
+
+	    } catch (IllegalArgumentException e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("Failed to delete personal details: " + e.getMessage());
+
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("An error occurred while deleting personal details.");
+
+	    }
+		return responseHandler;
+	}
+
+
+	@DeleteMapping("delete_all")
+	public ResponseHandler deleteAllPersonalDetails() {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try {
+	        personalDetailsService.deleteAllPersonalDetails();
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());
+	        responseHandler.setStatus(true);
+	        responseHandler.setData(new ArrayList<>());  
+	        responseHandler.setMessage("All personal details have been deleted.");
+
+	    } catch (Exception e) {
+	    	e.printStackTrace();
+	    	responseHandler.setTotalRecords(0);
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>());
+	        responseHandler.setMessage("An error occurred while deleting all personal details: " + e.getMessage());
+	    }
+		return responseHandler; 
+	}
+	
+	
+	@PostMapping("list")
+	public ResponseHandler getPersonalDetails(@RequestBody PraposalListing praposalListing) {
+	    ResponseHandler responseHandler = new ResponseHandler(); 
+	    try {
+	    	List<Map<String, Object>> personalDetailsList = personalDetailsService.getPersonalDetails(praposalListing);
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());    
+	        responseHandler.setStatus(true); 
+	        responseHandler.setData(personalDetailsList); 
+	        responseHandler.setMessage("Personal details fetched successfully.");
+	        
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        responseHandler.setTotalRecords(0); 
+	        responseHandler.setStatus(false);
+	        responseHandler.setData(new ArrayList<>()); 
+	        responseHandler.setMessage("An error occurred while fetching personal details.");
+  
+	    }
+	    return responseHandler; 
+	}
+	
+	@GetMapping("sample_data_export")
+	public ResponseHandler exportPersonalSampleData() {
+	    ResponseHandler responseHandler = new ResponseHandler();
+	    try { 
+	        String fileName = personalDetailsService.exportPersonalSampleData();
+	        String filePath = "C:\\download\\" + fileName;
+
+	        responseHandler.setStatus(true);
+	        responseHandler.setMessage("Sample Excel file generated successfully.");
+	        responseHandler.setData(filePath);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        responseHandler.setStatus(false);
+	        responseHandler.setMessage("Failed to generate sample Excel file.");
+	        responseHandler.setData(new ArrayList<>());
+	    }
+	    return responseHandler;
+	}
+
+//	
+
+	@PostMapping(value = "/import_personal_data_shedule", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseHandler importPersonalDetailsShedule(
+        @Parameter(description = "Excel file to upload", required = true)
+        @RequestParam("file") MultipartFile file
+    ) {
+        ResponseHandler response = new ResponseHandler();
+        try {
+        	 
+        	Map<String, Integer> recordCounts = new HashMap<>();
+            List<PersonalDetails> savedExcelList = personalDetailsService.importScheduleDetailsFromExcel(file, recordCounts);
+           
+            Integer totalExcelCount = recordCounts.getOrDefault("totalExcelCount", 0);
+            Integer errorExcelCount = recordCounts.getOrDefault("errorExcelCount", 0);  
+            
+            response.setStatus(true);
+            response.setMessage("Excel imported successfully. Rows added "+savedExcelList.size()+" Out of "+ totalExcelCount   + " and Errors " + errorExcelCount); 
+            response.setData(savedExcelList);
+        } catch (Exception e) {
+            e.printStackTrace(); 
+            response.setStatus(false);
+            response.setMessage("Failed to import Excel file.");
+            response.setData(new ArrayList<>());
+        }
+        return response;
     }
+	
+	@GetMapping("/export_excel_data")
+	public ResponseEntity<String> exportExcel() throws IOException {
+	    String filePath = personalDetailsService.exportPersonalData();
+	    return ResponseEntity.ok("File successfully saved at: " + filePath);
+	}
+	
+	@GetMapping("/export_pdf_data")
+	public ResponseEntity<String> exportPdf() throws Exception { 
+	    String filePath = personalDetailsService.exportPersonalDataToPdf();
+	    return ResponseEntity.ok("File successfully saved at: " + filePath);
+	}
+	
+	@GetMapping("/get_products") 
+	public ResponseHandler getAllProducts() {
+	    ResponseHandler response = new ResponseHandler();
+	    try {
+	        List<Map<String, Object>> products = personalDetailsService.fetchAllProducts();
+	        response.setStatus(true);
+	        response.setMessage("Products fetched successfully.");
+	        response.setData(products);
+	    } catch (Exception e) {
+	        response.setStatus(false);
+	        response.setMessage("Failed to fetch products.");
+	        response.setData(new ArrayList<>());
+	    }
+	    return response;
+	}
+	
+
+
+
+
+
+
+	
 }
