@@ -1,34 +1,54 @@
 package com.healthinsurance.Health.PersonalDetailsController;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.healthinsurance.Health.PersonalEntities.User;
-import com.healthinsurance.Health.hepler.TokenGenerator;
+import com.healthinsurance.Health.PersonalDetailsService.UserService;
+import com.healthinsurance.Health.PersonalEntities.Users;
+import com.healthinsurance.Health.Response.ResponseHandler;
 
-
-@RequestMapping("/users")
 @RestController
+@RequestMapping("/users")
 public class UserController {
+	private final UserService userService;
 
-	@Autowired
-	private TokenGenerator  tokenGenerator;
-	
-//	@PostMapping("/login")
-//	String testing(@RequestBody User user) {
-//		String token = null;
-//		try {
-//			token = TokenGenerator.generateToken("myUser123");
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			// TODO: handle exception
-//		}
-//		
-//		return token;
-//		
-//	}
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @PostMapping("/register")
+    public ResponseHandler register(@RequestBody Users user) { 
+    	ResponseHandler response = new ResponseHandler();
+    	try {
+    		String result = userService.registerUser(user);
+    		 response.setStatus(true); 
+    		 response.setData(result); 
+		} catch (Exception e) {
+			response.setStatus(false); 
+   		    response.setData(new ArrayList<>()); 
+   		    response.setMessage(e.getMessage()); 
+		}
+        return response; 
+    }
+
+    @PostMapping("/login")
+    public ResponseHandler login(@RequestBody Users user) { 
+    	ResponseHandler response = new ResponseHandler();
+    	try {
+    		String result = userService.loginUser(user);
+    		 response.setStatus(true); 
+    		 response.setData(result); 
+    		 response.setMessage("login Succefully!!");
+		} catch (Exception e) {
+			response.setStatus(false); 
+   		    response.setData(new ArrayList<>()); 
+   		    response.setMessage(e.getMessage()); 
+		}
+        return response; 
+    }
 }
-

@@ -21,16 +21,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.healthinsurance.Health.PersonalDTO.PersonalDetailsDTO;
-import com.healthinsurance.Health.PersonalDTO.UserLoginRequest;
 import com.healthinsurance.Health.PersonalDetailsRepository.QueueTableRepository;
 import com.healthinsurance.Health.PersonalDetailsService.PersonalDetailsService;
 import com.healthinsurance.Health.PersonalEntities.PersonalDetails;
 import com.healthinsurance.Health.PersonalEntities.QueueTable;
-import com.healthinsurance.Health.PersonalEntities.User;
+import com.healthinsurance.Health.PersonalEntities.Users;
 import com.healthinsurance.Health.PraposalListing.PraposalListing;
 import com.healthinsurance.Health.Response.ResponseHandler;
-import com.healthinsurance.Health.hepler.Auth;
-import com.healthinsurance.Health.hepler.TokenGenerator;
 
 import io.swagger.v3.oas.annotations.Parameter;
 
@@ -49,52 +46,7 @@ public class PersonalDetailsController {
 	@Autowired
 	private QueueTableRepository queueTableRepository;
  
-	
-	@Autowired
-	private Auth auth;
 
-	@PostMapping("/login")
-	com.healthinsurance.Health.Response.ResponseHandler ResponseHandler(@RequestBody UserLoginRequest user ) {
-		
-		ResponseHandler response = new ResponseHandler();
-		
-		System.err.println(" shiii" + user.getPassword());
-		
-		try {
-			String token = null;
-			try {
-				
-				boolean authenticateUser = false;
-				try {
-					authenticateUser = auth.authenticateUser(user.getUsername(),user.getPassword());
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				if(authenticateUser) {
-					token = TokenGenerator.generateToken("myUser123");
-						response.setData(token);
-				}else{
-					System.err.println("failed");
-				}
-				
-				
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			System.err.println(token);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// TODO: handle exception
-		}
-		return response;
-		
-		
-	}
-	
 	@PostMapping("add")
 	public ResponseHandler addPersonalDetails(@RequestBody PersonalDetailsDTO personalDetailsdto) {
 		ResponseHandler responseHandler = new ResponseHandler();
