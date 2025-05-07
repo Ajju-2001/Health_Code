@@ -22,12 +22,11 @@ public class JwtUtil {
     public String generateToken(Users user) {
         
     	Map<String, Object> claims = new HashMap<>();
-    	claims.put("userId", user.getUserId());
-    	claims.put("password", user.getPassword()); 
-        
+    	claims.put("userId", user.getUserId()); 
+         
 
         return Jwts.builder()
-        		.setClaims(claims)
+        		.setClaims(claims) 
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTimeMs))
@@ -44,6 +43,16 @@ public class JwtUtil {
                 .getBody()
                 .getSubject();
     }
+    
+    public Integer extractUserId(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(SECRET_KEY) 
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("userId", Integer.class);
+    } 
+
     
 
     public boolean validateToken(String token, String username) {

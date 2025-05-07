@@ -28,8 +28,10 @@ import com.healthinsurance.Health.PersonalEntities.QueueTable;
 import com.healthinsurance.Health.PersonalEntities.Users;
 import com.healthinsurance.Health.PraposalListing.PraposalListing;
 import com.healthinsurance.Health.Response.ResponseHandler;
+import com.healthinsurance.Health.hepler.JwtUtil;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +47,9 @@ public class PersonalDetailsController {
 	
 	@Autowired
 	private QueueTableRepository queueTableRepository;
+	
+	@Autowired
+	private JwtUtil jwtUtil; 
  
 
 	@PostMapping("add")
@@ -109,25 +114,42 @@ public class PersonalDetailsController {
 
 
 	@GetMapping("get_all")
-	public ResponseHandler getAllPersonalDetails() {
+	public ResponseHandler getAllPersonalDetails(HttpServletRequest request) {
 	    ResponseHandler responseHandler = new ResponseHandler();
 	    try {
+	        String authHeader = request.getHeader("Authorization");
+	        String jwt = null;
+	        String username = null;
+	        Integer userId = null;
+
+	        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+	            jwt = authHeader.substring(7); 
+	            username = jwtUtil.extractUsername(jwt);
+	            userId = jwtUtil.extractUserId(jwt);
+	            System.out.println("Extracted Username: " + username);
+	            System.out.println("Extracted UserId: " + userId);
+	        }
+
 	        List<PersonalDetails> allPersonalDetails = personalDetailsService.getAllPersonalDetails();
-	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());  
+	        responseHandler.setTotalRecords(personalDetailsService.getTotalCount());
+	        responseHandler.setMessage("Personal details fetched successfully for user: " + username); // ✅ only this one
 	        responseHandler.setStatus(true);
 	        responseHandler.setData(allPersonalDetails);
-	        responseHandler.setMessage("Personal details fetched successfully.");
+
 	    } catch (Exception e) {
-	    	e.printStackTrace();
-	    	responseHandler.setTotalRecords(0);
+	        e.printStackTrace();
+	        responseHandler.setTotalRecords(0);
 	        responseHandler.setStatus(false);
 	        responseHandler.setData(new ArrayList<>());
 	        responseHandler.setMessage("An error occurred while fetching personal details.");
 	    }
-		return responseHandler; 
+	    return responseHandler;
 	}
 
 
+	
+	
+	
 	@GetMapping("get_id/{id}")
 	public ResponseHandler getPersonalDetailsById(@PathVariable int id) {
 	    ResponseHandler responseHandler = new ResponseHandler();

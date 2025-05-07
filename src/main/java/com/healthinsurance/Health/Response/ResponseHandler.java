@@ -31,9 +31,10 @@ public class ResponseHandler {
 	public void setData(Object data) {
 		this.data = data;
 	}
+	
 	public String getMessage() {
 		return message;
-	} 
+	}
 	public void setMessage(String message) {
 		this.message = message;
 	}
@@ -43,6 +44,8 @@ public class ResponseHandler {
 	public void setTotalRecords(long l) {
 		this.totalRecords = l;
 	}
+	
+	
 	
 
 }

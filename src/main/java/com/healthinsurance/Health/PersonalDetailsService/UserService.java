@@ -49,7 +49,7 @@ public class UserService {
     	
         Optional<Users> existingUser = userRepository.findByUsername(user.getUsername());
         if (existingUser.isPresent()) {
-            Users foundUser = existingUser.get(); 
+            Users foundUser = existingUser.get();  
 
             if (passwordEncoder.matches(user.getPassword(), foundUser.getPassword())) {
                 return jwtUtil.generateToken(foundUser);  

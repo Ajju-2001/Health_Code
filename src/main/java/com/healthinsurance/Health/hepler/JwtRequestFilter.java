@@ -48,17 +48,18 @@ public class JwtRequestFilter extends OncePerRequestFilter{
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        String path = request.getServletPath();
+        String path = request.getServletPath(); 
 
         
         if (isExcluded(path)) {
             chain.doFilter(request, response);
-            return;
+            return; 
         }
 
         String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
+        Integer userId = null;
         String jwt = null;
 
 
@@ -67,15 +68,19 @@ public class JwtRequestFilter extends OncePerRequestFilter{
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                username = jwtUtil.extractUsername(jwt); 
+                username = jwtUtil.extractUsername(jwt);   
+                userId = jwtUtil.extractUserId(jwt);
+                
             } catch (ExpiredJwtException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); 
+                response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Token expired\"}");
                 return;  
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
                 response.getWriter().write("{\"error\": \"Invalid token\"}"); 
-                return;
+                return; 
             }
         }
 
