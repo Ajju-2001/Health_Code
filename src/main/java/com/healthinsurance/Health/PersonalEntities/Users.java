@@ -21,7 +21,9 @@ public class Users {
 	
 	@Column(name="password")
     private String password;
-
+     
+	@Column(name="role")
+	private String role;
 	
 
 	public Users(Integer userId, String username, String password) {
