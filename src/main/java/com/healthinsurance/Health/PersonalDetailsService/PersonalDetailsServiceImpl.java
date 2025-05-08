@@ -523,7 +523,7 @@ public class PersonalDetailsServiceImpl implements PersonalDetailsService {
 	public List<PersonalDetails> getAllPersonalDetails() {
 		List<PersonalDetails> personalDetailsList = personalDetailsRepository.findAll();
 		
-		if (personalDetailsList.isEmpty()) {
+		if (personalDetailsList == null  || personalDetailsList.isEmpty()) {
 			throw new IllegalArgumentException("No personal details found");
 		}
 		return personalDetailsList;

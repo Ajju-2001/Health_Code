@@ -24,10 +24,22 @@ public class UserService {
 
     public String registerUser(Users user) {
     	
-    	if (user.getUsername() == null || user.getUsername().trim().isEmpty() ||
-    	        user.getPassword() == null || user.getPassword().trim().isEmpty()) {
-    	        throw new IllegalArgumentException("Username and password must not be empty");
-    	    }
+    	if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("Username must not be empty");
+        }
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("Password must not be empty");
+        }
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email must not be empty");
+        }
+        if (user.getRole() == null || user.getRole().trim().isEmpty()) {
+            throw new IllegalArgumentException("Role must not be empty");
+        }
+
+        if (!user.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
     	
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
         	throw new IllegalArgumentException("Username already exists");

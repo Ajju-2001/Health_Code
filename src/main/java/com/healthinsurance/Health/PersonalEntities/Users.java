@@ -25,12 +25,18 @@ public class Users {
 	@Column(name="role")
 	private String role;
 	
+	@Column(name="email")
+	private String email;
 
-	public Users(Integer userId, String username, String password) {
+	
+
+	public Users(Integer userId, String username, String password,String role,String email) { 
 		super();
 		this.userId = userId;
 		this.username = username;
 		this.password = password;
+		this.role = role;
+		this.email = email;
 	}
 
 	public Users() {
@@ -61,5 +67,22 @@ public class Users {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	
 	
 }
