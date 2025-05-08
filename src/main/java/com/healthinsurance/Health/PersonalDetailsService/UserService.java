@@ -2,7 +2,6 @@ package com.healthinsurance.Health.PersonalDetailsService;
 
 import java.util.Optional;
 
-import org.aspectj.apache.bcel.classfile.Module.Uses;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +12,7 @@ import com.healthinsurance.Health.hepler.JwtUtil;
 @Service
 public class UserService {
 	private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil; 
     private final BCryptPasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, JwtUtil jwtUtil) {

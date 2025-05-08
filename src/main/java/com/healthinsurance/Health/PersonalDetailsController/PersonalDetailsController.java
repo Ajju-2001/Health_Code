@@ -1,6 +1,5 @@
 package com.healthinsurance.Health.PersonalDetailsController;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,8 +23,6 @@ import com.healthinsurance.Health.PersonalDTO.PersonalDetailsDTO;
 import com.healthinsurance.Health.PersonalDetailsRepository.QueueTableRepository;
 import com.healthinsurance.Health.PersonalDetailsService.PersonalDetailsService;
 import com.healthinsurance.Health.PersonalEntities.PersonalDetails;
-import com.healthinsurance.Health.PersonalEntities.QueueTable;
-import com.healthinsurance.Health.PersonalEntities.Users;
 import com.healthinsurance.Health.PraposalListing.PraposalListing;
 import com.healthinsurance.Health.Response.ResponseHandler;
 import com.healthinsurance.Health.hepler.JwtUtil;
@@ -35,9 +32,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-
 
 
 @RestController

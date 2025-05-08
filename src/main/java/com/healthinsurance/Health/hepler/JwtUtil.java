@@ -1,17 +1,16 @@
 package com.healthinsurance.Health.hepler;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.healthinsurance.Health.PersonalEntities.Users;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 
@@ -20,21 +19,27 @@ public class JwtUtil {
 	
 //	private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256); 
 	
-	@Value("${jwt.secret}")
-    private String secret;
+//	@Value("${jwt.secret}")
+//    private String secret;
+	
+	private static final String SECRET = "1234567890123456789012345678901234567890123456789012345678901234";
 
-    private Key SECRET_KEY;
+	
+    private Key SECRET_KEY; 
 	
 	private final long expirationTimeMs = 1000 * 60 * 60 * 24; 
-	
+	 
 	@PostConstruct
     public void init() {
-        this.SECRET_KEY = Keys.hmacShaKeyFor(secret.getBytes());
-    }
+		if (SECRET.length() < 64) {
+            throw new IllegalArgumentException("Secret key must be at least 64 characters");
+        }
+		this.SECRET_KEY = Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));  
+    } 
 
     public String generateToken(Users user) {
         
-    	Map<String, Object> claims = new HashMap<>();
+    	Map<String, Object> claims = new HashMap<>();  
     	claims.put("userId", user.getUserId()); 
     	claims.put("email", user.getEmail());
         claims.put("role", user.getRole());
@@ -73,8 +78,6 @@ public class JwtUtil {
     public String extractRole(String token) {
     	return (String) extractAllClaims(token).get("role");
     }
-
-   
 
     public boolean validateToken(String token,Integer userId, String username, String email, String role) {
     	Integer extactInteger = extractUserId(token);
